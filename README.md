@@ -1,4 +1,7 @@
-Solo Leveling: Arise - Debug/Feature Menu
+Solo Leveling: Arise - Feature Menu
+
+[ FIND YOUR OWN BYPASS AND USE IT ]
+
 This is a personal project I’ve been working on for Solo Leveling: Arise. It’s an internal ImGui menu that lets you hook into the game’s memory to play around with different stats and game values.
 
 I built this primarily to practice memory manipulation, hooking, and building clean overlays in C++.
