@@ -76,10 +76,12 @@ namespace MinHookWrapper {
     }
 
     Hook::Hook(LPVOID target, LPVOID detour)
-        : m_target(target), m_detour(detour), m_enabled(false) {
+        : m_target(target), m_detour(detour), m_enabled(false), m_created(false) {
         MH_STATUS status = MH_CreateHook(target, detour, nullptr);
         if (status != MH_OK) {
             std::cerr << "[MinHook] Failed to create hook: " << GetErrorString(status) << std::endl;
+        } else {
+            m_created = true;
         }
     }
 
@@ -87,10 +89,19 @@ namespace MinHookWrapper {
         if (m_enabled) {
             Disable();
         }
-        MH_RemoveHook(m_target);
+        if (m_created) {
+            MH_STATUS status = MH_RemoveHook(m_target);
+            if (status != MH_OK) {
+                std::cerr << "[MinHook] Failed to remove hook: " << GetErrorString(status) << std::endl;
+            }
+        }
     }
 
     bool Hook::Enable() {
+        if (!m_created) {
+            std::cerr << "[MinHook] Cannot enable hook: hook was not created" << std::endl;
+            return false;
+        }
         if (EnableHook(m_target)) {
             m_enabled = true;
             return true;
@@ -99,6 +110,7 @@ namespace MinHookWrapper {
     }
 
     bool Hook::Disable() {
+        if (!m_created) return false;
         if (DisableHook(m_target)) {
             m_enabled = false;
             return true;
@@ -108,5 +120,9 @@ namespace MinHookWrapper {
 
     bool Hook::IsEnabled() const {
         return m_enabled;
+    }
+
+    bool Hook::IsCreated() const {
+        return m_created;
     }
 }

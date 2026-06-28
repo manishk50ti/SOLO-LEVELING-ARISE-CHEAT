@@ -108,12 +108,36 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 		{
 			pDevice->GetImmediateContext(&pContext);
 			DXGI_SWAP_CHAIN_DESC sd;
-			pSwapChain->GetDesc(&sd);
+			HRESULT hr = pSwapChain->GetDesc(&sd);
+			if (FAILED(hr))
+			{
+				pContext->Release();
+				pContext = NULL;
+				pDevice->Release();
+				pDevice = NULL;
+				return oPresent(pSwapChain, SyncInterval, Flags);
+			}
 			window = sd.OutputWindow;
-			ID3D11Texture2D* pBackBuffer;
-			pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)& pBackBuffer);
-			pDevice->CreateRenderTargetView(pBackBuffer, NULL, &mainRenderTargetView);
+			ID3D11Texture2D* pBackBuffer = NULL;
+			hr = pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)& pBackBuffer);
+			if (FAILED(hr) || !pBackBuffer)
+			{
+				pContext->Release();
+				pContext = NULL;
+				pDevice->Release();
+				pDevice = NULL;
+				return oPresent(pSwapChain, SyncInterval, Flags);
+			}
+			hr = pDevice->CreateRenderTargetView(pBackBuffer, NULL, &mainRenderTargetView);
 			pBackBuffer->Release();
+			if (FAILED(hr))
+			{
+				pContext->Release();
+				pContext = NULL;
+				pDevice->Release();
+				pDevice = NULL;
+				return oPresent(pSwapChain, SyncInterval, Flags);
+			}
 			oWndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR)WndProc);
 			InitImGui();
 			init = true;
@@ -140,19 +164,41 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 	return oPresent(pSwapChain, SyncInterval, Flags);
 }
 
+static constexpr int MAX_INIT_RETRIES = 50;
+static constexpr DWORD RETRY_DELAY_MS = 200;
+
 DWORD WINAPI MainThread(LPVOID lpReserved)
 {
 	bool init_hook = false;
+	int retries = 0;
 	do
 	{
-		if (kiero::init(kiero::RenderType::D3D11) == kiero::Status::Success)
+		kiero::Status::Enum status = kiero::init(kiero::RenderType::D3D11);
+		if (status == kiero::Status::Success)
 		{
 			kiero::bind(8, (void**)& oPresent, hkPresent);
 			init_hook = true;
 		}
+		else if (status == kiero::Status::AlreadyInitializedError)
+		{
+			init_hook = true;
+		}
+		else
+		{
+			retries++;
+			if (retries >= MAX_INIT_RETRIES)
+			{
+				return FALSE;
+			}
+			Sleep(RETRY_DELAY_MS);
+		}
 	} while (!init_hook);
 
-	GameHooks::Initialize();
+	if (!GameHooks::Initialize())
+	{
+		kiero::shutdown();
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -161,9 +207,14 @@ BOOL WINAPI DllMain(HMODULE hMod, DWORD dwReason, LPVOID lpReserved)
 	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
+	{
 		DisableThreadLibraryCalls(hMod);
-		CreateThread(nullptr, 0, MainThread, hMod, 0, nullptr);
+		HANDLE hThread = CreateThread(nullptr, 0, MainThread, hMod, 0, nullptr);
+		if (!hThread)
+			return FALSE;
+		CloseHandle(hThread);
 		break;
+	}
 	case DLL_PROCESS_DETACH:
 		GameHooks::Cleanup();
 		kiero::shutdown();
