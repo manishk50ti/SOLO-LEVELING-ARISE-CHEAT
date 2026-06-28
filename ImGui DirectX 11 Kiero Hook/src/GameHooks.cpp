@@ -62,103 +62,77 @@ namespace GameHooks {
             return false;
         }
 
-        // Hook damage functions
-        uintptr_t getIncValueAddr = Offsets::GetAbsoluteAddress(Offsets::Damage::GetIncreaseValue_ShieldConversion);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(getIncValueAddr),
+        int hooksCreated = 0;
+        int hooksFailed = 0;
+
+        auto installHook = [&](uintptr_t rva, LPVOID detour, auto* original, const char* name) {
+            uintptr_t addr = Offsets::GetAbsoluteAddress(rva);
+            if (MinHookWrapper::CreateHook(reinterpret_cast<LPVOID>(addr), detour, original)) {
+                if (MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(addr))) {
+                    std::cout << "[GameHooks] Hooked " << name << " at 0x" << std::hex << addr << std::endl;
+                    hooksCreated++;
+                } else {
+                    std::cerr << "[GameHooks] Failed to enable hook: " << name << " at 0x" << std::hex << addr << std::endl;
+                    hooksFailed++;
+                }
+            } else {
+                std::cerr << "[GameHooks] Failed to create hook: " << name << " at 0x" << std::hex << addr << std::endl;
+                hooksFailed++;
+            }
+        };
+
+        installHook(Offsets::Damage::GetIncreaseValue_ShieldConversion,
             reinterpret_cast<LPVOID>(&Damage::hk_GetIncreaseValue_ShieldConversion),
-            &Damage::o_GetIncreaseValue_ShieldConversion
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(getIncValueAddr));
-            std::cout << "[GameHooks] Hooked GetIncreaseValue_ShieldConversion at 0x" << std::hex << getIncValueAddr << std::endl;
-        }
+            &Damage::o_GetIncreaseValue_ShieldConversion,
+            "GetIncreaseValue_ShieldConversion");
 
-        uintptr_t getAddDamageAddr = Offsets::GetAbsoluteAddress(Offsets::Damage::GetAddDamage_ElementGSSkill);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(getAddDamageAddr),
+        installHook(Offsets::Damage::GetAddDamage_ElementGSSkill,
             reinterpret_cast<LPVOID>(&Damage::hk_GetAddDamage),
-            &Damage::o_GetAddDamage
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(getAddDamageAddr));
-            std::cout << "[GameHooks] Hooked GetAddDamage at 0x" << std::hex << getAddDamageAddr << std::endl;
-        }
+            &Damage::o_GetAddDamage,
+            "GetAddDamage");
 
-        uintptr_t getRateAddr = Offsets::GetAbsoluteAddress(Offsets::Damage::GetRate_ElementGSSkillCritical);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(getRateAddr),
+        installHook(Offsets::Damage::GetRate_ElementGSSkillCritical,
             reinterpret_cast<LPVOID>(&Damage::hk_GetRate),
-            &Damage::o_GetRate
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(getRateAddr));
-            std::cout << "[GameHooks] Hooked GetRate at 0x" << std::hex << getRateAddr << std::endl;
-        }
+            &Damage::o_GetRate,
+            "GetRate");
 
-        // Hook stat functions
-        uintptr_t addStatAddr = Offsets::GetAbsoluteAddress(Offsets::Stats::AddStat);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(addStatAddr),
+        installHook(Offsets::Stats::AddStat,
             reinterpret_cast<LPVOID>(&Stats::hk_AddStat),
-            &Stats::o_AddStat
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(addStatAddr));
-            std::cout << "[GameHooks] Hooked AddStat at 0x" << std::hex << addStatAddr << std::endl;
-        }
+            &Stats::o_AddStat,
+            "AddStat");
 
-        uintptr_t getStatValueAddr = Offsets::GetAbsoluteAddress(Offsets::Stats::GetStatValue);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(getStatValueAddr),
+        installHook(Offsets::Stats::GetStatValue,
             reinterpret_cast<LPVOID>(&Stats::hk_GetStatValue),
-            &Stats::o_GetStatValue
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(getStatValueAddr));
-            std::cout << "[GameHooks] Hooked GetStatValue at 0x" << std::hex << getStatValueAddr << std::endl;
-        }
+            &Stats::o_GetStatValue,
+            "GetStatValue");
 
-        // Hook hunter functions
-        uintptr_t setHunterHPAddr = Offsets::GetAbsoluteAddress(Offsets::Hunter::SetHunterHP);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(setHunterHPAddr),
+        installHook(Offsets::Hunter::SetHunterHP,
             reinterpret_cast<LPVOID>(&Hunter::hk_SetHunterHP),
-            &Hunter::o_SetHunterHP
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(setHunterHPAddr));
-            std::cout << "[GameHooks] Hooked SetHunterHP at 0x" << std::hex << setHunterHPAddr << std::endl;
-        }
+            &Hunter::o_SetHunterHP,
+            "SetHunterHP");
 
-        // Hook cooldown functions
-        uintptr_t onCoolTimeReducedAddr = Offsets::GetAbsoluteAddress(Offsets::Skills::OnSkillCoolTimeReduced);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(onCoolTimeReducedAddr),
+        installHook(Offsets::Skills::OnSkillCoolTimeReduced,
             reinterpret_cast<LPVOID>(&Cooldown::hk_OnSkillCoolTimeReduced),
-            &Cooldown::o_OnSkillCoolTimeReduced
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(onCoolTimeReducedAddr));
-            std::cout << "[GameHooks] Hooked OnSkillCoolTimeReduced at 0x" << std::hex << onCoolTimeReducedAddr << std::endl;
-        }
+            &Cooldown::o_OnSkillCoolTimeReduced,
+            "OnSkillCoolTimeReduced");
 
-        // Hook speed functions
-        uintptr_t setSpeedAddr = Offsets::GetAbsoluteAddress(Offsets::Speed::SetSpeed);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(setSpeedAddr),
+        installHook(Offsets::Speed::SetSpeed,
             reinterpret_cast<LPVOID>(&Speed::hk_SetSpeed),
-            &Speed::o_SetSpeed
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(setSpeedAddr));
-            std::cout << "[GameHooks] Hooked SetSpeed at 0x" << std::hex << setSpeedAddr << std::endl;
-        }
+            &Speed::o_SetSpeed,
+            "SetSpeed");
 
-        // Hook anti-cheat functions
-        uintptr_t logPlayerTakeDamageAddr = Offsets::GetAbsoluteAddress(Offsets::AntiCheat::LogPlayerTakeDamage);
-        if (MinHookWrapper::CreateHook(
-            reinterpret_cast<LPVOID>(logPlayerTakeDamageAddr),
+        installHook(Offsets::AntiCheat::LogPlayerTakeDamage,
             reinterpret_cast<LPVOID>(&AntiCheat::hk_LogPlayerTakeDamage),
-            &AntiCheat::o_LogPlayerTakeDamage
-        )) {
-            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(logPlayerTakeDamageAddr));
-            std::cout << "[GameHooks] Hooked LogPlayerTakeDamage at 0x" << std::hex << logPlayerTakeDamageAddr << std::endl;
+            &AntiCheat::o_LogPlayerTakeDamage,
+            "LogPlayerTakeDamage");
+
+        if (hooksFailed > 0) {
+            std::cerr << "[GameHooks] " << std::dec << hooksFailed << " hook(s) failed, "
+                      << hooksCreated << " hook(s) active" << std::endl;
+        } else {
+            std::cout << "[GameHooks] All " << std::dec << hooksCreated << " hooks initialized successfully" << std::endl;
         }
 
-        std::cout << "[GameHooks] All hooks initialized successfully" << std::endl;
         g_initialized = true;
         return true;
     }
@@ -182,10 +156,11 @@ namespace GameHooks {
             bool isAttack,
             GameTypes::DamageInfo* damageInfo
         ) {
+            if (!o_GetIncreaseValue_ShieldConversion) return 0;
             long originalResult = o_GetIncreaseValue_ShieldConversion(attacker, defender, attackSkill, isAttack, damageInfo);
 
             if (g_features.infiniteDamage || g_features.oneHitKill) {
-                return g_features.damageValue; // Custom damage value
+                return g_features.damageValue;
             }
 
             return originalResult;
@@ -198,6 +173,7 @@ namespace GameHooks {
             bool isAttack,
             GameTypes::DamageInfo* damageInfo
         ) {
+            if (!o_GetIncreaseValue_ShieldRemain) return 0;
             long originalResult = o_GetIncreaseValue_ShieldRemain(attacker, defender, attackSkill, isAttack, damageInfo);
 
             if (g_features.infiniteDamage || g_features.oneHitKill) {
@@ -208,6 +184,7 @@ namespace GameHooks {
         }
 
         long hk_GetAddDamage(GameTypes::SkillIdentity* attackSkill) {
+            if (!o_GetAddDamage) return 0;
             long originalResult = o_GetAddDamage(attackSkill);
 
             if (g_features.infiniteDamage || g_features.oneHitKill) {
@@ -218,10 +195,11 @@ namespace GameHooks {
         }
 
         long hk_GetRate() {
+            if (!o_GetRate) return 0;
             long originalResult = o_GetRate();
 
             if (g_features.superCrit) {
-                return g_features.critRateValue; // Custom crit rate
+                return g_features.critRateValue;
             }
 
             return originalResult;
@@ -231,6 +209,8 @@ namespace GameHooks {
     // Stat hook implementations
     namespace Stats {
         void hk_AddStat(GameTypes::StatContainer* statContainer, int32_t statType, int value) {
+            if (!o_AddStat) return;
+
             if (g_features.maxAttack && statType == static_cast<int32_t>(GameEnums::GuildStatType::AddAtt)) {
                 o_AddStat(statContainer, statType, g_features.maxAttackValue);
                 return;
@@ -245,9 +225,9 @@ namespace GameHooks {
         }
 
         float hk_GetStatValue(GameTypes::StatContainer* statContainer) {
+            if (!o_GetStatValue) return 0.0f;
             float originalResult = o_GetStatValue(statContainer);
 
-            // Modify stats based on features
             if (g_features.infiniteHP && originalResult < g_features.maxHPValue) {
                 return g_features.maxHPValue;
             }
@@ -266,6 +246,7 @@ namespace GameHooks {
             int64_t value2,
             bool flag
         ) {
+            if (!o_SetStat) return;
             o_SetStat(statContainer, statType, value1, value2, flag);
         }
     }
@@ -273,6 +254,8 @@ namespace GameHooks {
     // Hunter hook implementations
     namespace Hunter {
         void hk_SetHunterHP(int hp) {
+            if (!o_SetHunterHP) return;
+
             if (g_features.godMode || g_features.infiniteHP) {
                 o_SetHunterHP(static_cast<int>(g_features.maxHPValue));
                 return;
@@ -282,6 +265,7 @@ namespace GameHooks {
         }
 
         void hk_SetHunterActive(bool active) {
+            if (!o_SetHunterActive) return;
             o_SetHunterActive(active);
         }
     }
@@ -290,19 +274,14 @@ namespace GameHooks {
     namespace Cooldown {
         void hk_OnSkillCoolTimeReduced() {
             if (g_features.noCooldown) {
-                // Skip cooldown reduction - effectively no cooldown
                 return;
             }
 
-            o_OnSkillCoolTimeReduced();
+            if (o_OnSkillCoolTimeReduced) o_OnSkillCoolTimeReduced();
         }
 
         void hk_ResetCoolTime() {
-            if (g_features.noCooldown || g_features.instantSkill) {
-                // Always reset cooldown
-                o_ResetCoolTime();
-                return;
-            }
+            if (!o_ResetCoolTime) return;
 
             o_ResetCoolTime();
         }
@@ -311,8 +290,10 @@ namespace GameHooks {
     // Speed hook implementations
     namespace Speed {
         void hk_SetSpeed(float speed) {
+            if (!o_SetSpeed) return;
+
             if (g_features.maxSpeed) {
-                o_SetSpeed(g_features.speedMultiplier); // Custom speed multiplier
+                o_SetSpeed(g_features.speedMultiplier);
                 return;
             }
 
@@ -324,20 +305,18 @@ namespace GameHooks {
     namespace AntiCheat {
         void hk_LogPlayerTakeDamage() {
             if (g_features.bypassAntiCheat) {
-                // Skip logging to bypass anti-cheat
                 return;
             }
 
-            o_LogPlayerTakeDamage();
+            if (o_LogPlayerTakeDamage) o_LogPlayerTakeDamage();
         }
 
         void hk_AntiCheatCommonPlayerTakeDamage() {
             if (g_features.bypassAntiCheat) {
-                // Skip anti-cheat check
                 return;
             }
 
-            o_AntiCheatCommonPlayerTakeDamage();
+            if (o_AntiCheatCommonPlayerTakeDamage) o_AntiCheatCommonPlayerTakeDamage();
         }
     }
 
