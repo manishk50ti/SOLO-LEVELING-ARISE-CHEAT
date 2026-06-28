@@ -1,11 +1,9 @@
 #include "../include/MinHookWrapper.h"
-#include <iostream>
 
 namespace MinHookWrapper {
     bool Initialize() {
         MH_STATUS status = MH_Initialize();
         if (status != MH_OK && status != MH_ERROR_ALREADY_INITIALIZED) {
-            std::cerr << "[MinHook] Failed to initialize: " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
@@ -14,7 +12,6 @@ namespace MinHookWrapper {
     bool Uninitialize() {
         MH_STATUS status = MH_Uninitialize();
         if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to uninitialize: " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
@@ -23,7 +20,6 @@ namespace MinHookWrapper {
     bool EnableHook(LPVOID target) {
         MH_STATUS status = MH_EnableHook(target);
         if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to enable hook: " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
@@ -32,7 +28,6 @@ namespace MinHookWrapper {
     bool DisableHook(LPVOID target) {
         MH_STATUS status = MH_DisableHook(target);
         if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to disable hook: " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
@@ -41,7 +36,6 @@ namespace MinHookWrapper {
     bool EnableAllHooks() {
         MH_STATUS status = MH_EnableHook(MH_ALL_HOOKS);
         if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to enable all hooks: " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
@@ -50,7 +44,6 @@ namespace MinHookWrapper {
     bool DisableAllHooks() {
         MH_STATUS status = MH_DisableHook(MH_ALL_HOOKS);
         if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to disable all hooks: " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
@@ -78,9 +71,7 @@ namespace MinHookWrapper {
     Hook::Hook(LPVOID target, LPVOID detour)
         : m_target(target), m_detour(detour), m_enabled(false) {
         MH_STATUS status = MH_CreateHook(target, detour, nullptr);
-        if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to create hook: " << GetErrorString(status) << std::endl;
-        }
+        (void)status;
     }
 
     Hook::~Hook() {

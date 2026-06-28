@@ -150,6 +150,10 @@ DWORD WINAPI MainThread(LPVOID lpReserved)
 			kiero::bind(8, (void**)& oPresent, hkPresent);
 			init_hook = true;
 		}
+		else
+		{
+			Sleep(100);
+		}
 	} while (!init_hook);
 
 	GameHooks::Initialize();
