@@ -18,6 +18,9 @@ namespace MinHookWrapper {
         return status == MH_OK;
     }
 
+    // Execute a MinHook operation with error logging
+    bool ExecuteMHOperation(MH_STATUS status, const char* operationName);
+
     // Enable a hook
     bool EnableHook(LPVOID target);
 
