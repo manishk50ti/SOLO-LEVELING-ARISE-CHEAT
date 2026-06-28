@@ -1,8 +1,10 @@
 #pragma once
 #include "../include/Offsets.h"
 #include "../include/Enums.h"
+#include "../include/MinHookWrapper.h"
 #include <cstdint>
 #include <functional>
+#include <iostream>
 
 // Forward declarations for game types (obfuscated names from dump.cs)
 namespace GameTypes {
@@ -67,6 +69,22 @@ namespace GameHooks {
 
     extern Features g_features;
     extern bool g_initialized;
+
+    // Install a single hook: resolve offset, create, enable, and log
+    template<typename T>
+    bool InstallHook(uintptr_t offset, LPVOID detour, T* original, const char* name) {
+        uintptr_t addr = Offsets::GetAbsoluteAddress(offset);
+        if (MinHookWrapper::CreateHook(
+            reinterpret_cast<LPVOID>(addr),
+            detour,
+            original
+        )) {
+            MinHookWrapper::EnableHook(reinterpret_cast<LPVOID>(addr));
+            std::cout << "[GameHooks] Hooked " << name << " at 0x" << std::hex << addr << std::endl;
+            return true;
+        }
+        return false;
+    }
 
     // Initialize all hooks
     bool Initialize();

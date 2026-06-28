@@ -2,58 +2,40 @@
 #include <iostream>
 
 namespace MinHookWrapper {
-    bool Initialize() {
-        MH_STATUS status = MH_Initialize();
-        if (status != MH_OK && status != MH_ERROR_ALREADY_INITIALIZED) {
-            std::cerr << "[MinHook] Failed to initialize: " << GetErrorString(status) << std::endl;
+    bool ExecuteMHOperation(MH_STATUS status, const char* operationName) {
+        if (status != MH_OK) {
+            std::cerr << "[MinHook] Failed to " << operationName << ": " << GetErrorString(status) << std::endl;
             return false;
         }
         return true;
+    }
+
+    bool Initialize() {
+        MH_STATUS status = MH_Initialize();
+        if (status == MH_ERROR_ALREADY_INITIALIZED) {
+            return true;
+        }
+        return ExecuteMHOperation(status, "initialize");
     }
 
     bool Uninitialize() {
-        MH_STATUS status = MH_Uninitialize();
-        if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to uninitialize: " << GetErrorString(status) << std::endl;
-            return false;
-        }
-        return true;
+        return ExecuteMHOperation(MH_Uninitialize(), "uninitialize");
     }
 
     bool EnableHook(LPVOID target) {
-        MH_STATUS status = MH_EnableHook(target);
-        if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to enable hook: " << GetErrorString(status) << std::endl;
-            return false;
-        }
-        return true;
+        return ExecuteMHOperation(MH_EnableHook(target), "enable hook");
     }
 
     bool DisableHook(LPVOID target) {
-        MH_STATUS status = MH_DisableHook(target);
-        if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to disable hook: " << GetErrorString(status) << std::endl;
-            return false;
-        }
-        return true;
+        return ExecuteMHOperation(MH_DisableHook(target), "disable hook");
     }
 
     bool EnableAllHooks() {
-        MH_STATUS status = MH_EnableHook(MH_ALL_HOOKS);
-        if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to enable all hooks: " << GetErrorString(status) << std::endl;
-            return false;
-        }
-        return true;
+        return ExecuteMHOperation(MH_EnableHook(MH_ALL_HOOKS), "enable all hooks");
     }
 
     bool DisableAllHooks() {
-        MH_STATUS status = MH_DisableHook(MH_ALL_HOOKS);
-        if (status != MH_OK) {
-            std::cerr << "[MinHook] Failed to disable all hooks: " << GetErrorString(status) << std::endl;
-            return false;
-        }
-        return true;
+        return ExecuteMHOperation(MH_DisableHook(MH_ALL_HOOKS), "disable all hooks");
     }
 
     std::string GetErrorString(MH_STATUS status) {
